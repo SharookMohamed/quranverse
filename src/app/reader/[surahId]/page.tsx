@@ -2,20 +2,27 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 async function getSurah(surahId: string) {
-  const res = await fetch(
-    `https://api.alquran.cloud/v1/surah/${surahId}/editions/quran-uthmani,en.sahih`,
-    { next: { revalidate: 86400 } }
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.data;
+  try {
+    const res = await fetch(
+      `https://api.alquran.cloud/v1/surah/${surahId}/editions/quran-uthmani,en.sahih`,
+      { next: { revalidate: 86400 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.data;
+  } catch {
+    return null;
+  }
 }
 
-export default async function ReaderPage({ params }: { params: { surahId: string } }) {
-  const surahId = parseInt(params.surahId);
-  if (isNaN(surahId) || surahId < 1 || surahId > 114) notFound();
-  const surahData = await getSurah(params.surahId);
+export default async function ReaderPage({ params }: { params: Promise<{ surahId: string }> }) {
+  const { surahId } = await params;
+  const id = parseInt(surahId);
+  if (isNaN(id) || id < 1 || id > 114) notFound();
+
+  const surahData = await getSurah(surahId);
   if (!surahData) notFound();
+
   const arabic = surahData[0];
   const translation = surahData[1];
 
